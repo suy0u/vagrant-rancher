@@ -1,4 +1,4 @@
-VM_BOX      = "bento/ubuntu-26.04"
+VM_BOX      = "bento/ubuntu-22.04"
 VM_PROVIDER = "virtualbox"
 
 Vagrant.configure("2") do |config|
@@ -6,7 +6,7 @@ Vagrant.configure("2") do |config|
 
 # --------------- RANCHER ---------------
   RANCHER_VM_NAME   = "rancher"
-  RANCHER_VM_CPUs   = 2
+  RANCHER_VM_CPUs   = 4
   RANCHER_VM_MEMORY = 4096 
 
   config.vm.define RANCHER_VM_NAME do |rancher|
