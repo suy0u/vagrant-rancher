@@ -11,9 +11,9 @@ Vagrant.configure("2") do |config|
 
   config.vm.define RANCHER_VM_NAME do |rancher|
       rancher.vm.hostname = RANCHER_VM_NAME
-      rancher.vm.box     = VM_BOX
+      rancher.vm.box      = VM_BOX
       rancher.vm.network "private_network", ip: "10.10.172.10"
-      rancher.vm.network "public_network", bridge: "en0"
+      rancher.vm.network "public_network", bridge: "wlp5s0"
    
     rancher.vm.provider VM_PROVIDER do |vb|
       vb.name   = RANCHER_VM_NAME
@@ -39,7 +39,7 @@ Vagrant.configure("2") do |config|
 # --------------- NFS Server --------------
   NFS_SERVER_NAME   = "nfsserver"
   NFS_SERVER_CPUs   = 1
-  NFS_SERVER_MEMORY = 512
+  NFS_SERVER_MEMORY = 1024
 
   config.vm.define NFS_SERVER_NAME do |nfsserver|
       nfsserver.vm.hostname = NFS_SERVER_NAME
@@ -64,7 +64,7 @@ Vagrant.configure("2") do |config|
 
 # --------------- NODES ---------------
   NODE_CPUs   = 2
-  NODE_MEMORY = 1024
+  NODE_MEMORY = 4096
 
   (1..3).each do |i|
     node_name = "node#{i}"
@@ -83,10 +83,18 @@ Vagrant.configure("2") do |config|
       node.vm.provision "shell", inline: <<-SHELL
         apt-get update
         apt-get install htop -y
-        echo "10.10.172.10 rancher.int" >> /etc/hosts
+        echo "10.10.172.10 rancher.local" >> /etc/hosts
         curl -fsSL https://get.docker.com | sh
         systemctl enable --now docker
         usermod -aG docker vagrant
+        mkdir -p /etc/rancher/rke2
+        NODE_IP=$(ip addr show eth1 | grep 'inet ' | awk '{print $2}' | cut -d/ -f1)
+        echo "node-ip: $NODE_IP" > /etc/rancher/rke2/config.yaml
+        echo "tls-san:" >> /etc/rancher/rke2/config.yaml
+        echo "  - $NODE_IP"  >> /etc/rancher/rke2/config.yaml
+        echo "  - 10.10.172.10"  >> /etc/rancher/rke2/config.yaml
+        echo "  - 127.0.0.1" >> /etc/rancher/rke2/config.yaml
+        echo "disable-cloud-controller: true" >> /etc/rancher/rke2/config.yaml
       SHELL
     end
   end
